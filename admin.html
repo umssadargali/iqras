@@ -7,8 +7,8 @@
         body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; margin: 0; padding: 10px; }
         .header { background: #1b5e20; color: white; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 15px; }
         .stats-box { display: flex; gap: 10px; margin-bottom: 15px; }
-        .stat-card { flex: 1; background: white; padding: 10px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-bottom: 4px solid #1b5e20; }
-        .stat-card b { font-size: 20px; color: #1b5e20; display: block; }
+        .stat-card { flex: 1; background: white; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-bottom: 4px solid #1b5e20; }
+        .stat-card b { font-size: 22px; color: #1b5e20; display: block; }
         .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
         select, input { flex: 1; min-width: 100px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
         .list-card { background: white; padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
@@ -54,11 +54,11 @@
     <div id="mainList"></div>
 
 <script>
-    // === APNA URL YAHAN DALEIN ===
+    // === YAHAN APNA SCRIPT URL DALEIN ===
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyLbmtYzTZi9Rg9geYbZgzQLuQX6N25Rf1t6SQKZ0B_v5YwiZtBoYNMaH3im-uJm8u_g/exec";
 
     window.onload = () => {
-        // Default Aaj ki date
+        // Default Aaj ki date set karein
         document.getElementById('attDate').value = new Date().toISOString().split('T')[0];
     };
 
@@ -74,26 +74,27 @@
             const res = await fetch(`${SCRIPT_URL}?getAttendance=true&classId=${c}&name=all&date=${d}`);
             const data = await res.json();
             
-            // Statistics Update
-            // 1. Total Unique Students (Ek bacha kai baar in/out ho sakta hai, hum unique ginenge)
-            let uniqueStudents = new Set(data.map(item => item[0])).size;
-            document.getElementById('totalPresent').innerText = uniqueStudents;
+            // Statistics Update Logic
+            // 1. Total Students: Unique names count
+            let uniqueNames = [...new Set(data.map(item => item[0]))];
+            document.getElementById('totalPresent').innerText = uniqueNames.length;
             
-            // 2. Currently IN Count
+            // 2. Currently IN: Status 'IN' count
             let inCount = data.filter(item => item[5] === 'IN').length;
             document.getElementById('currentIn').innerText = inCount;
 
             list.innerHTML = "";
             if(data.length === 0) {
-                list.innerHTML = `<p style='text-align:center; color:red; padding:20px;'>No records found for Class ${c} on this date.</p>`;
+                list.innerHTML = `<p style='text-align:center; color:red; padding:20px;'>No records found for Class ${c} on ${d}</p>`;
                 return;
             }
 
             data.forEach(row => {
-                // Photo Logic: Agar ID hai toh dikhao, warna placeholder icon
+                // Photo Rendering: 
+                // Agar row[6] mein ID hai (naya data), toh photo dikhegi.
+                // Agar khali hai (purana data), toh placeholder icon dikhega.
                 let photoUrl = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-                if(row[6] && row[6] !== "No Photo") {
-                    // ID format fix
+                if(row[6] && row[6] !== "" && row[6] !== "No Photo") {
                     photoUrl = "https://lh3.googleusercontent.com/d/" + row[6];
                 }
 
@@ -103,14 +104,14 @@
                         <div class="info">
                             <b>${row[0]}</b>
                             <p><b>IN:</b> ${row[1]}</p>
-                            <p><b>OUT:</b> ${row[2] || 'Still Inside'}</p>
+                            <p><b>OUT:</b> ${row[2] === 'Inside' ? 'Still Inside' : row[2]}</p>
                         </div>
                         <span class="badge ${row[5]=='IN'?'in':'out'}">${row[5]}</span>
                     </div>
                 `;
             });
         } catch(e) { 
-            list.innerHTML = "<p style='text-align:center; color:red;'>Connection Error!</p>"; 
+            list.innerHTML = "<p style='text-align:center; color:red;'>Data load nahi ho saka.</p>"; 
         }
     }
 
