@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IQRA Admin Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; margin: 0; padding: 15px; }
+        .header { background: #1b5e20; color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; }
+        .stats { display: flex; gap: 10px; margin-bottom: 20px; }
+        .stat-box { flex: 1; background: white; padding: 15px; border-radius: 10px; text-align: center; border-bottom: 4px solid #1b5e20; }
+        .stat-box span { font-size: 22px; font-weight: bold; color: #1b5e20; }
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; }
+        select, input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
+        table { width: 100%; background: white; border-collapse: collapse; border-radius: 10px; overflow: hidden; font-size: 13px; }
+        th { background: #f1f5f9; padding: 12px; text-align: left; }
+        td { padding: 12px; border-top: 1px solid #eee; }
+        .p-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .badge { padding: 4px 8px; border-radius: 5px; font-weight: bold; font-size: 10px; }
+        .badge-in { background: #dcfce7; color: #166534; }
+        .badge-out { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <div class="header"><h2>IQRA ADMIN PANEL</h2></div>
+    <div class="stats">
+        <div class="stat-box"><label>Total (31D)</label><br><span id="tRec">0</span></div>
+        <div class="stat-box"><label>Currently IN</label><br><span id="iRec" style="color:green">0</span></div>
+    </div>
+    <div class="controls">
+        <select id="cid" onchange="loadAdminData()">
+            <option value="">-- Class --</option>
+            <option value="1">Class 1</option>
+            <option value="2">Class 2</option>
+        </select>
+        <input type="text" id="filter" placeholder="Search..." onkeyup="doSearch()">
+    </div>
+    <table id="adminTable">
+        <thead><tr><th>Student</th><th>Time Logs</th><th>Status</th></tr></thead>
+        <tbody id="tBody"></tbody>
+    </table>
+
+    <script>
+        const URL = "https://script.google.com/macros/s/AKfycbznr-h201geI2vkXmnuS6AqgsKeZowXhnQ3z546tsSLJng-ByJp0gai-8FD1TPLhVn_zg/exec";
+
+        async function loadAdminData() {
+            let c = document.getElementById('cid').value;
+            if(!c) return;
+            document.getElementById('tBody').innerHTML = "Loading...";
+
+            const res = await fetch(`${URL}?getAttendance=true&classId=${c}&name=all`);
+            const data = await res.json();
+            
+            document.getElementById('tRec').innerText = data.length;
+            document.getElementById('iRec').innerText = data.filter(r => r[5] === 'IN').length;
+
+            let html = "";
+            data.forEach(row => {
+                let pic = row[6].includes("id=") ? `https://drive.google.com/uc?export=view&id=${row[6].split('id=')[1]}` : "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+                html += `
+                    <tr>
+                        <td style="display:flex;align-items:center;gap:8px">
+                            <img src="${pic}" class="p-img"><b>${row[0]}</b>
+                        </td>
+                        <td><small>In: ${row[1]}</small><br><small>Out: ${row[2]}</small></td>
+                        <td><span class="badge ${row[5]=='IN'?'badge-in':'badge-out'}">${row[5]}</span></td>
+                    </tr>
+                `;
+            });
+            document.getElementById('tBody').innerHTML = html || "No records found";
+        }
+
+        function doSearch() {
+            let v = document.getElementById("filter").value.toLowerCase();
+            let rows = document.getElementById("tBody").getElementsByTagName("tr");
+            for(let r of rows) r.style.display = r.innerText.toLowerCase().includes(v) ? "" : "none";
+        }
+    </script>
+</body>
+</html>
