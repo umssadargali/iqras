@@ -6,10 +6,13 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; margin: 0; padding: 10px; }
         .header { background: #1b5e20; color: white; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 15px; }
+        .stats-box { display: flex; gap: 10px; margin-bottom: 15px; }
+        .stat-card { flex: 1; background: white; padding: 10px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-bottom: 4px solid #1b5e20; }
+        .stat-card b { font-size: 20px; color: #1b5e20; display: block; }
         .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
         select, input { flex: 1; min-width: 100px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
         .list-card { background: white; padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .st-img { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 2px solid #1b5e20; margin-right: 12px; }
+        .st-img { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 2px solid #1b5e20; margin-right: 12px; background: #eee; }
         .info { flex-grow: 1; }
         .info b { font-size: 15px; color: #333; }
         .info p { font-size: 11px; color: #666; margin: 2px 0; }
@@ -22,6 +25,17 @@
 
     <div class="header">
         <h2 style="margin:0">IQRA ADMIN PANEL</h2>
+    </div>
+
+    <div class="stats-box">
+        <div class="stat-card">
+            <span style="font-size: 12px; color: #666;">Total Students</span>
+            <b id="totalPresent">0</b>
+        </div>
+        <div class="stat-card">
+            <span style="font-size: 12px; color: #666;">Currently IN</span>
+            <b id="currentIn">0</b>
+        </div>
     </div>
 
     <div class="controls">
@@ -40,9 +54,11 @@
     <div id="mainList"></div>
 
 <script>
+    // === APNA URL YAHAN DALEIN ===
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyLbmtYzTZi9Rg9geYbZgzQLuQX6N25Rf1t6SQKZ0B_v5YwiZtBoYNMaH3im-uJm8u_g/exec";
 
     window.onload = () => {
+        // Default Aaj ki date
         document.getElementById('attDate').value = new Date().toISOString().split('T')[0];
     };
 
@@ -58,16 +74,26 @@
             const res = await fetch(`${SCRIPT_URL}?getAttendance=true&classId=${c}&name=all&date=${d}`);
             const data = await res.json();
             
+            // Statistics Update
+            // 1. Total Unique Students (Ek bacha kai baar in/out ho sakta hai, hum unique ginenge)
+            let uniqueStudents = new Set(data.map(item => item[0])).size;
+            document.getElementById('totalPresent').innerText = uniqueStudents;
+            
+            // 2. Currently IN Count
+            let inCount = data.filter(item => item[5] === 'IN').length;
+            document.getElementById('currentIn').innerText = inCount;
+
             list.innerHTML = "";
             if(data.length === 0) {
-                list.innerHTML = "<p style='text-align:center; color:red;'>No data found for this date.</p>";
+                list.innerHTML = `<p style='text-align:center; color:red; padding:20px;'>No records found for Class ${c} on this date.</p>`;
                 return;
             }
 
             data.forEach(row => {
-                // PHOTO FIX: Direct link logic
+                // Photo Logic: Agar ID hai toh dikhao, warna placeholder icon
                 let photoUrl = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-                if(row[6]) {
+                if(row[6] && row[6] !== "No Photo") {
+                    // ID format fix
                     photoUrl = "https://lh3.googleusercontent.com/d/" + row[6];
                 }
 
@@ -76,14 +102,16 @@
                         <img src="${photoUrl}" class="st-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
                         <div class="info">
                             <b>${row[0]}</b>
-                            <p>In: ${row[1]}</p>
-                            <p>Out: ${row[2]}</p>
+                            <p><b>IN:</b> ${row[1]}</p>
+                            <p><b>OUT:</b> ${row[2] || 'Still Inside'}</p>
                         </div>
                         <span class="badge ${row[5]=='IN'?'in':'out'}">${row[5]}</span>
                     </div>
                 `;
             });
-        } catch(e) { list.innerHTML = "Error loading data."; }
+        } catch(e) { 
+            list.innerHTML = "<p style='text-align:center; color:red;'>Connection Error!</p>"; 
+        }
     }
 
     function search() {
