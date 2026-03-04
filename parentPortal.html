@@ -95,7 +95,7 @@
         const container = document.getElementById('historyContainer');
         const loader = document.getElementById('loader');
 
-        if(!sname) { alert("Pehle bacha chunein!"); return; }
+        if(!sname) { alert("First select students!"); return; }
 
         container.innerHTML = "";
         loader.style.display = "block";
@@ -115,7 +115,7 @@
                             ? "https://lh3.googleusercontent.com/d/" + row[6] 
                             : "https://cdn-icons-png.flaticon.com/512/149/149071.png";
                 
-                let outTime = (row[2] === "Inside") ? "School mein hai" : row[2];
+                let outTime = (row[2] === "Inside") ? "Present in the School" : row[2];
 
                 container.innerHTML += `
                     <div class="history-card">
