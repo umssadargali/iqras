@@ -4,64 +4,64 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IQRA Parent Portal</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f9ff; margin: 0; padding: 10px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0fdf4; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        .card { background: white; width: 100%; max-width: 400px; padding: 15px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 5px solid #0284c7; }
         .header { background: #0284c7; color: white; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 15px; }
+        
         .stats-box { display: flex; gap: 10px; margin-bottom: 15px; }
-        .stat-card { flex: 1; background: white; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-bottom: 4px solid #0284c7; }
-        .stat-card b { font-size: 22px; color: #0284c7; display: block; }
-        .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
-        select, input { flex: 1; min-width: 100px; padding: 10px; border-radius: 8px; border: 1px solid #bae6fd; }
-        .list-card { background: white; padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .st-img { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 2px solid #0284c7; margin-right: 12px; background: #eee; }
+        .stat-card { flex: 1; background: #f8fafc; padding: 10px; border-radius: 10px; text-align: center; border: 1px solid #e2e8f0; }
+        .stat-card b { font-size: 20px; color: #0284c7; display: block; }
+        
+        select, input { width: 100%; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 14px; border: 2px solid #0284c7; box-sizing: border-box; }
+        
+        .list-card { background: white; padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; align-items: center; border: 1px solid #eee; }
+        .st-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #0284c7; margin-right: 12px; background: #eee; }
+        
         .info { flex-grow: 1; }
-        .info b { font-size: 15px; color: #333; }
+        .info b { font-size: 14px; color: #333; }
         .info p { font-size: 11px; color: #666; margin: 2px 0; }
+        
         .badge { padding: 4px 8px; border-radius: 5px; font-size: 10px; font-weight: bold; }
         .in { background: #dcfce7; color: #166534; }
         .out { background: #fee2e2; color: #991b1b; }
-        #loading { text-align: center; color: #0284c7; padding: 20px; display: none; }
+        
+        #loading { text-align: center; padding: 10px; color: #0284c7; display: none; }
     </style>
 </head>
 <body>
 
+<div class="card">
     <div class="header">
-        <h2 style="margin:0">IQRA PARENT PORTAL</h2>
-        <small>Bacho ki Haziri ki Jankari</small>
+        <h2 style="margin:0; font-size: 18px;">IQRA PARENT PORTAL</h2>
+        <small>Attendance & Records</small>
     </div>
 
     <div class="stats-box">
-        <div class="stat-card">
-            <span style="font-size: 12px; color: #666;">Total Bachhe</span>
-            <b id="totalPresent">0</b>
-        </div>
-        <div class="stat-card">
-            <span style="font-size: 12px; color: #666;">Abhi School Mein</span>
-            <b id="currentIn">0</b>
-        </div>
+        <div class="stat-card"><span>Total Present</span><b id="totalPresent">0</b></div>
+        <div class="stat-card"><span>In School</span><b id="currentIn">0</b></div>
     </div>
 
-    <div class="controls">
-        <select id="cid" onchange="loadData()">
-            <option value="">-- Class Chunein --</option>
-            <option value="1">Class 1</option><option value="2">Class 2</option>
-            <option value="3">Class 3</option><option value="4">Class 4</option>
-            <option value="5">Class 5</option><option value="6">Class 6</option>
-            <option value="7">Class 7</option><option value="8">Class 8</option>
-            <option value="9">Class 9</option><option value="10">Class 10</option>
-        </select>
-        <input type="date" id="attDate" onchange="loadData()">
-        <input type="text" id="srch" placeholder="Bache ka naam likhein..." onkeyup="search()">
-    </div>
+    <select id="cid" onchange="loadData()">
+        <option value="">-- Select Class --</option>
+        <option value="1">Class 1</option><option value="2">Class 2</option>
+        <option value="3">Class 3</option><option value="4">Class 4</option>
+        <option value="5">Class 5</option><option value="6">Class 6</option>
+        <option value="7">Class 7</option><option value="8">Class 8</option>
+        <option value="9">Class 9</option><option value="10">Class 10</option>
+    </select>
 
-    <div id="loading">Data load ho raha hai...</div>
+    <input type="date" id="attDate" onchange="loadData()">
+    <input type="text" id="srch" placeholder="Search student name..." onkeyup="search()">
+
+    <div id="loading">Searching records...</div>
     <div id="mainList"></div>
+</div>
 
 <script>
-    // === YAHAN APNA SCRIPT URL DALEIN ===
+    // === APNA SCRIPT URL YAHAN DALEIN ===
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyLbmtYzTZi9Rg9geYbZgzQLuQX6N25Rf1t6SQKZ0B_v5YwiZtBoYNMaH3im-uJm8u_g/exec";
 
     window.onload = () => {
-        // Aaj ki date default set karna
         document.getElementById('attDate').value = new Date().toISOString().split('T')[0];
     };
 
@@ -72,7 +72,6 @@
         
         const list = document.getElementById('mainList');
         const loader = document.getElementById('loading');
-        
         list.innerHTML = "";
         loader.style.display = "block";
 
@@ -80,22 +79,20 @@
             const res = await fetch(`${SCRIPT_URL}?getAttendance=true&classId=${c}&name=all&date=${d}`);
             const data = await res.json();
             
-            // Statistics Update
+            // Count Logic
             let uniqueNames = [...new Set(data.map(item => item[0]))];
             document.getElementById('totalPresent').innerText = uniqueNames.length;
-            
-            let inCount = data.filter(item => item[5] === 'IN').length;
-            document.getElementById('currentIn').innerText = inCount;
+            document.getElementById('currentIn').innerText = data.filter(item => item[5] === 'IN').length;
 
             loader.style.display = "none";
             
             if(data.length === 0) {
-                list.innerHTML = `<p style='text-align:center; color:#ef4444; padding:20px; background:white; border-radius:10px;'>Class ${c} mein ${d} ko koi haziri nahi mili.</p>`;
+                list.innerHTML = "<p style='text-align:center; font-size:12px; color:red;'>No records found for this date.</p>";
                 return;
             }
 
             data.forEach(row => {
-                // Photo Logic (Placeholder if ID missing)
+                // Photo Fix
                 let photoUrl = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
                 if(row[6] && row[6] !== "" && row[6] !== "No Photo") {
                     photoUrl = "https://lh3.googleusercontent.com/d/" + row[6];
@@ -106,16 +103,16 @@
                         <img src="${photoUrl}" class="st-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
                         <div class="info">
                             <b>${row[0]}</b>
-                            <p><b>Aaye:</b> ${row[1]}</p>
-                            <p><b>Gaye:</b> ${row[2] === 'Inside' ? 'Abhi school mein hain' : row[2]}</p>
+                            <p>IN: ${row[1]}</p>
+                            <p>OUT: ${row[2] === 'Inside' ? 'Still Inside' : row[2]}</p>
                         </div>
-                        <span class="badge ${row[5]=='IN'?'in':'out'}">${row[5] === 'IN' ? 'SCHOOL MEIN' : 'BAHAR'}</span>
+                        <span class="badge ${row[5]=='IN'?'in':'out'}">${row[5]}</span>
                     </div>
                 `;
             });
         } catch(e) { 
             loader.style.display = "none";
-            list.innerHTML = "<p style='text-align:center; color:red;'>Network ki dikkat hai. Dubara koshish karein.</p>"; 
+            list.innerHTML = "<p style='text-align:center; color:red;'>Error connecting to server.</p>"; 
         }
     }
 
