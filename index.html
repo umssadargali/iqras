@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IQRA Attendance App</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0fdf4; margin: 0; padding: 15px; text-align: center; }
+        .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { color: #1b5e20; }
+        select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
+        button { background: #1b5e20; color: white; font-weight: bold; cursor: pointer; border: none; }
+        #camera { width: 100%; border-radius: 10px; display: none; margin-top: 10px; }
+        #status { margin-top: 15px; font-weight: bold; color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>IQRA Attendance</h2>
+        <select id="classList" onchange="loadStudents()">
+            <option value="">-- Select Class --</option>
+            <option value="1">Class 1</option>
+            <option value="2">Class 2</option>
+            <option value="3">Class 3</option>
+        </select>
+        <select id="studentList"><option value="">-- Select Student --</option></select>
+        
+        <button onclick="startCamera('check-in')">Check-In (Aaye)</button>
+        <button onclick="startCamera('check-out')" style="background:#d32f2f;">Check-Out (Gaye)</button>
+        
+        <video id="camera" autoplay playsinline></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznr-h201geI2vkXmnuS6AqgsKeZowXhnQ3z546tsSLJng-ByJp0gai-8FD1TPLhVn_zg/exec";
+        let currentType = "";
+
+        function loadStudents() {
+            let cid = document.getElementById('classList').value;
+            if(!cid) return;
+            fetch(SCRIPT_URL + "?classId=" + cid).then(r => r.json()).then(data => {
+                let html = '<option value="">-- Select Student --</option>';
+                data.forEach(s => html += `<option value="${s}">${s}</option>`);
+                document.getElementById('studentList').innerHTML = html;
+            });
+        }
+
+        async function startCamera(type) {
+            currentType = type;
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+            const video = document.getElementById('camera');
+            video.srcObject = stream;
+            video.style.display = "block";
+            setTimeout(() => takePhoto(stream), 3000);
+        }
+
+        function takePhoto(stream) {
+            const video = document.getElementById('camera');
+            const canvas = document.getElementById('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const photo = canvas.toDataURL('image/jpeg', 0.5);
+            
+            stream.getTracks().forEach(track => track.stop());
+            video.style.display = "none";
+            submitData(photo);
+        }
+
+        function submitData(photo) {
+            document.getElementById('status').innerText = "Uploading...";
+            const data = {
+                classId: document.getElementById('classList').value,
+                name: document.getElementById('studentList').value,
+                photo: photo,
+                type: currentType,
+                location: "School Campus"
+            };
+
+            fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(data) })
+            .then(r => r.text()).then(res => {
+                document.getElementById('status').innerText = "Attendance Marked: " + res;
+            });
+        }
+    </script>
+</body>
+</html>
