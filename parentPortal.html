@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IQRA Parent Portal</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0fdf4; margin: 0; padding: 15px; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .header { background: #1b5e20; color: white; padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 20px; }
+        select, button { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; }
+        button { background: #2e7d32; color: white; font-weight: bold; border: none; cursor: pointer; }
+        .record-card { border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; margin-top: 10px; display: flex; align-items: center; gap: 15px; }
+        .record-card img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; background: #eee; }
+        .time-info { font-size: 13px; color: #444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header"><h2>IQRA Parent Portal</h2></div>
+        <select id="cSelect" onchange="loadStudents()">
+            <option value="">-- Select Class --</option>
+            <option value="1">Class 1</option>
+            <option value="2">Class 2</option>
+            <option value="3">Class 3</option>
+        </select>
+        <select id="sList"><option value="">-- Select Student --</option></select>
+        <button onclick="viewAttendance()">View Last 31 Days</button>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznr-h201geI2vkXmnuS6AqgsKeZowXhnQ3z546tsSLJng-ByJp0gai-8FD1TPLhVn_zg/exec";
+
+        function loadStudents() {
+            let cid = document.getElementById('cSelect').value;
+            fetch(SCRIPT_URL + "?classId=" + cid).then(r => r.json()).then(data => {
+                let html = '<option value="">-- Select Student --</option>';
+                data.forEach(s => html += `<option value="${s}">${s}</option>`);
+                document.getElementById('sList').innerHTML = html;
+            });
+        }
+
+        async function viewAttendance() {
+            let cid = document.getElementById('cSelect').value;
+            let name = document.getElementById('sList').value;
+            const resDiv = document.getElementById('results');
+            resDiv.innerHTML = "Searching...";
+
+            const response = await fetch(`${SCRIPT_URL}?getAttendance=true&classId=${cid}&name=${name}`);
+            const data = await response.json();
+            
+            resDiv.innerHTML = "";
+            data.forEach(row => {
+                let pic = row[6].includes("id=") ? `https://drive.google.com/uc?export=view&id=${row[6].split('id=')[1]}` : "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+                resDiv.innerHTML += `
+                    <div class="record-card">
+                        <img src="${pic}">
+                        <div class="time-info">
+                            <b>${row[0]}</b><br>
+                            In: ${row[1]}<br>
+                            Out: ${row[2]}<br>
+                            Status: <span style="color:${row[5]=='IN'?'green':'red'}">${row[5]}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
