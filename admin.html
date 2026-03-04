@@ -1,44 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IQRA Admin Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>IQRA Admin Portal</title>
     <style>
-        :root { --primary: #1b5e20; --bg: #f8fafc; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .header { background: var(--primary); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; }
-        .stats-container { display: flex; gap: 10px; margin-bottom: 20px; }
-        .stat-card { flex: 1; background: white; padding: 15px; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-bottom: 4px solid var(--primary); }
-        .stat-card div { font-size: 24px; font-weight: bold; color: var(--primary); }
-        .controls { background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; }
-        select, input { flex: 1; min-width: 120px; padding: 10px; border-radius: 5px; border: 1px solid #ddd; font-size: 14px; }
-        .table-area { background: white; border-radius: 10px; overflow-x: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 400px; }
-        th { background: #f1f5f9; padding: 12px; text-align: left; position: sticky; top: 0; }
-        td { padding: 12px; border-top: 1px solid #f1f5f9; }
-        .student-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #eee; border: 1px solid #ddd; }
-        .badge { padding: 4px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
-        .badge-in { background: #dcfce7; color: #166534; }
-        .badge-out { background: #fee2e2; color: #991b1b; }
-        @media (max-width: 480px) { .stat-card div { font-size: 18px; } }
+        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; margin: 0; padding: 10px; }
+        .header { background: #1b5e20; color: white; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 15px; }
+        .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+        select, input { flex: 1; min-width: 100px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
+        .list-card { background: white; padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .st-img { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 2px solid #1b5e20; margin-right: 12px; }
+        .info { flex-grow: 1; }
+        .info b { font-size: 15px; color: #333; }
+        .info p { font-size: 11px; color: #666; margin: 2px 0; }
+        .badge { padding: 4px 8px; border-radius: 5px; font-size: 10px; font-weight: bold; }
+        .in { background: #dcfce7; color: #166534; }
+        .out { background: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h2 style="margin:0">IQRA ADMIN PANEL</h2>
-        <small>Real-time Attendance Tracking</small>
-    </div>
-
-    <div class="stats-container">
-        <div class="stat-card"><label>Total Records</label><div id="tCount">0</div></div>
-        <div class="stat-card"><label>Present (IN)</label><div id="iCount" style="color: #2e7d32;">0</div></div>
     </div>
 
     <div class="controls">
-        <select id="cSelect" onchange="loadAdminData()">
+        <select id="cid" onchange="loadData()">
             <option value="">-- Class --</option>
             <option value="1">Class 1</option><option value="2">Class 2</option>
             <option value="3">Class 3</option><option value="4">Class 4</option>
@@ -46,91 +33,64 @@
             <option value="7">Class 7</option><option value="8">Class 8</option>
             <option value="9">Class 9</option><option value="10">Class 10</option>
         </select>
-
-        <input type="date" id="attDate" onchange="loadAdminData()">
-
-        <input type="text" id="sInput" placeholder="Search student name..." onkeyup="filterTable()">
+        <input type="date" id="attDate" onchange="loadData()">
+        <input type="text" id="srch" placeholder="Search..." onkeyup="search()">
     </div>
 
-    <div class="table-area">
-        <table>
-            <thead>
-                <tr>
-                    <th>Student Details</th>
-                    <th>Time Logs</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="tBody">
-                <tr><td colspan="3" style="text-align:center; padding:40px; color:#999;">Select a class to view attendance</td></tr>
-            </tbody>
-        </table>
-    </div>
+    <div id="mainList"></div>
 
 <script>
-    // === YAHAN APNA NAYA DEPLOY URL DALEIN ===
-    const URL = "https://script.google.com/macros/s/AKfycbxKceBZOrE4QEU3fHaj_qHdEdG3U0By-EiCCTAWiWGgHGcAQVAVP9o1gJoSjoVi97va1Q/exec"; 
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyLbmtYzTZi9Rg9geYbZgzQLuQX6N25Rf1t6SQKZ0B_v5YwiZtBoYNMaH3im-uJm8u_g/exec";
 
-    // Aaj ki date default set karein
     window.onload = () => {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('attDate').value = today;
+        document.getElementById('attDate').value = new Date().toISOString().split('T')[0];
     };
 
-    async function loadAdminData() {
-        const cid = document.getElementById('cSelect').value;
-        const selDate = document.getElementById('attDate').value;
+    async function loadData() {
+        let c = document.getElementById('cid').value;
+        let d = document.getElementById('attDate').value;
+        if(!c) return;
         
-        if(!cid) return;
-        
-        document.getElementById('tBody').innerHTML = "<tr><td colspan='3' style='text-align:center; padding:20px;'>Fetching data from Cloud...</td></tr>";
+        const list = document.getElementById('mainList');
+        list.innerHTML = "<p style='text-align:center'>Loading Records...</p>";
 
         try {
-            // Backend ko date bhej rahe hain
-            const res = await fetch(`${URL}?getAttendance=true&classId=${cid}&name=all&date=${selDate}`);
+            const res = await fetch(`${SCRIPT_URL}?getAttendance=true&classId=${c}&name=all&date=${d}`);
             const data = await res.json();
             
-            document.getElementById('tCount').innerText = data.length;
-            document.getElementById('iCount').innerText = data.filter(r => r[5] === 'IN').length;
-
-            let html = "";
+            list.innerHTML = "";
             if(data.length === 0) {
-                html = `<tr><td colspan="3" style="text-align:center; padding:30px;">No records found for Class ${cid} on ${selDate}</td></tr>`;
-            } else {
-                data.forEach(row => {
-                    // Photo logic: Agar link hai toh dikhao, warna default icon
-                    let photoUrl = (row[6] && row[6].includes("http")) ? row[6] : "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-                    let statusCls = row[5] === 'IN' ? 'badge-in' : 'badge-out';
-                    
-                    html += `
-                        <tr>
-                            <td style="display:flex; align-items:center; gap:12px;">
-                                <img src="${photoUrl}" class="student-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
-                                <div><b>${row[0]}</b></div>
-                            </td>
-                            <td>
-                                <div style="font-size:11px; color:#666;">In: ${row[1]}</div>
-                                <div style="font-size:11px; color:#666;">Out: ${row[2]}</div>
-                            </td>
-                            <td><span class="badge ${statusCls}">${row[5]}</span></td>
-                        </tr>
-                    `;
-                });
+                list.innerHTML = "<p style='text-align:center; color:red;'>No data found for this date.</p>";
+                return;
             }
-            document.getElementById('tBody').innerHTML = html;
-        } catch(e) { 
-            document.getElementById('tBody').innerHTML = "<tr><td colspan='3' style='text-align:center; color:red;'>Connection Error! Check Internet.</td></tr>";
-        }
+
+            data.forEach(row => {
+                // PHOTO FIX: Direct link logic
+                let photoUrl = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+                if(row[6]) {
+                    photoUrl = "https://lh3.googleusercontent.com/d/" + row[6];
+                }
+
+                list.innerHTML += `
+                    <div class="list-card">
+                        <img src="${photoUrl}" class="st-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
+                        <div class="info">
+                            <b>${row[0]}</b>
+                            <p>In: ${row[1]}</p>
+                            <p>Out: ${row[2]}</p>
+                        </div>
+                        <span class="badge ${row[5]=='IN'?'in':'out'}">${row[5]}</span>
+                    </div>
+                `;
+            });
+        } catch(e) { list.innerHTML = "Error loading data."; }
     }
 
-    function filterTable() {
-        let val = document.getElementById("sInput").value.toLowerCase();
-        let rows = document.getElementById("tBody").getElementsByTagName("tr");
-        for (let r of rows) {
-            if(r.cells.length > 1) {
-                let n = r.cells[0].innerText.toLowerCase();
-                r.style.display = n.includes(val) ? "" : "none";
-            }
+    function search() {
+        let v = document.getElementById('srch').value.toLowerCase();
+        let cards = document.getElementsByClassName('list-card');
+        for(let c of cards) {
+            c.style.display = c.innerText.toLowerCase().includes(v) ? "flex" : "none";
         }
     }
 </script>
