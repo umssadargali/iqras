@@ -1,79 +1,138 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IQRA Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; margin: 0; padding: 15px; }
-        .header { background: #1b5e20; color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; }
-        .stats { display: flex; gap: 10px; margin-bottom: 20px; }
-        .stat-box { flex: 1; background: white; padding: 15px; border-radius: 10px; text-align: center; border-bottom: 4px solid #1b5e20; }
-        .stat-box span { font-size: 22px; font-weight: bold; color: #1b5e20; }
-        .controls { display: flex; gap: 10px; margin-bottom: 20px; }
-        select, input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
-        table { width: 100%; background: white; border-collapse: collapse; border-radius: 10px; overflow: hidden; font-size: 13px; }
-        th { background: #f1f5f9; padding: 12px; text-align: left; }
-        td { padding: 12px; border-top: 1px solid #eee; }
-        .p-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-        .badge { padding: 4px 8px; border-radius: 5px; font-weight: bold; font-size: 10px; }
+        :root { --primary: #1b5e20; --bg: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .header { background: var(--primary); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; }
+        .stats-container { display: flex; gap: 10px; margin-bottom: 20px; }
+        .stat-card { flex: 1; background: white; padding: 15px; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-bottom: 4px solid var(--primary); }
+        .stat-card div { font-size: 24px; font-weight: bold; color: var(--primary); }
+        .controls { background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; }
+        select, input { flex: 1; min-width: 120px; padding: 10px; border-radius: 5px; border: 1px solid #ddd; font-size: 14px; }
+        .table-area { background: white; border-radius: 10px; overflow-x: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 400px; }
+        th { background: #f1f5f9; padding: 12px; text-align: left; position: sticky; top: 0; }
+        td { padding: 12px; border-top: 1px solid #f1f5f9; }
+        .student-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #eee; border: 1px solid #ddd; }
+        .badge { padding: 4px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         .badge-in { background: #dcfce7; color: #166534; }
         .badge-out { background: #fee2e2; color: #991b1b; }
+        @media (max-width: 480px) { .stat-card div { font-size: 18px; } }
     </style>
 </head>
 <body>
-    <div class="header"><h2>IQRA ADMIN PANEL</h2></div>
-    <div class="stats">
-        <div class="stat-box"><label>Total (31D)</label><br><span id="tRec">0</span></div>
-        <div class="stat-box"><label>Currently IN</label><br><span id="iRec" style="color:green">0</span></div>
+
+    <div class="header">
+        <h2 style="margin:0">IQRA ADMIN PANEL</h2>
+        <small>Real-time Attendance Tracking</small>
     </div>
+
+    <div class="stats-container">
+        <div class="stat-card"><label>Total Records</label><div id="tCount">0</div></div>
+        <div class="stat-card"><label>Present (IN)</label><div id="iCount" style="color: #2e7d32;">0</div></div>
+    </div>
+
     <div class="controls">
-        <select id="cid" onchange="loadAdminData()">
+        <select id="cSelect" onchange="loadAdminData()">
             <option value="">-- Class --</option>
-            <option value="1">Class 1</option>
-            <option value="2">Class 2</option>
+            <option value="1">Class 1</option><option value="2">Class 2</option>
+            <option value="3">Class 3</option><option value="4">Class 4</option>
+            <option value="5">Class 5</option><option value="6">Class 6</option>
+            <option value="7">Class 7</option><option value="8">Class 8</option>
+            <option value="9">Class 9</option><option value="10">Class 10</option>
         </select>
-        <input type="text" id="filter" placeholder="Search..." onkeyup="doSearch()">
+
+        <input type="date" id="attDate" onchange="loadAdminData()">
+
+        <input type="text" id="sInput" placeholder="Search student name..." onkeyup="filterTable()">
     </div>
-    <table id="adminTable">
-        <thead><tr><th>Student</th><th>Time Logs</th><th>Status</th></tr></thead>
-        <tbody id="tBody"></tbody>
-    </table>
 
-    <script>
-        const URL = "https://script.google.com/macros/s/AKfycbznr-h201geI2vkXmnuS6AqgsKeZowXhnQ3z546tsSLJng-ByJp0gai-8FD1TPLhVn_zg/exec";
+    <div class="table-area">
+        <table>
+            <thead>
+                <tr>
+                    <th>Student Details</th>
+                    <th>Time Logs</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="tBody">
+                <tr><td colspan="3" style="text-align:center; padding:40px; color:#999;">Select a class to view attendance</td></tr>
+            </tbody>
+        </table>
+    </div>
 
-        async function loadAdminData() {
-            let c = document.getElementById('cid').value;
-            if(!c) return;
-            document.getElementById('tBody').innerHTML = "Loading...";
+<script>
+    // === YAHAN APNA NAYA DEPLOY URL DALEIN ===
+    const URL = "https://script.google.com/macros/s/AKfycbxKceBZOrE4QEU3fHaj_qHdEdG3U0By-EiCCTAWiWGgHGcAQVAVP9o1gJoSjoVi97va1Q/exec"; 
 
-            const res = await fetch(`${URL}?getAttendance=true&classId=${c}&name=all`);
+    // Aaj ki date default set karein
+    window.onload = () => {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('attDate').value = today;
+    };
+
+    async function loadAdminData() {
+        const cid = document.getElementById('cSelect').value;
+        const selDate = document.getElementById('attDate').value;
+        
+        if(!cid) return;
+        
+        document.getElementById('tBody').innerHTML = "<tr><td colspan='3' style='text-align:center; padding:20px;'>Fetching data from Cloud...</td></tr>";
+
+        try {
+            // Backend ko date bhej rahe hain
+            const res = await fetch(`${URL}?getAttendance=true&classId=${cid}&name=all&date=${selDate}`);
             const data = await res.json();
             
-            document.getElementById('tRec').innerText = data.length;
-            document.getElementById('iRec').innerText = data.filter(r => r[5] === 'IN').length;
+            document.getElementById('tCount').innerText = data.length;
+            document.getElementById('iCount').innerText = data.filter(r => r[5] === 'IN').length;
 
             let html = "";
-            data.forEach(row => {
-                let pic = row[6].includes("id=") ? `https://drive.google.com/uc?export=view&id=${row[6].split('id=')[1]}` : "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-                html += `
-                    <tr>
-                        <td style="display:flex;align-items:center;gap:8px">
-                            <img src="${pic}" class="p-img"><b>${row[0]}</b>
-                        </td>
-                        <td><small>In: ${row[1]}</small><br><small>Out: ${row[2]}</small></td>
-                        <td><span class="badge ${row[5]=='IN'?'badge-in':'badge-out'}">${row[5]}</span></td>
-                    </tr>
-                `;
-            });
-            document.getElementById('tBody').innerHTML = html || "No records found";
+            if(data.length === 0) {
+                html = `<tr><td colspan="3" style="text-align:center; padding:30px;">No records found for Class ${cid} on ${selDate}</td></tr>`;
+            } else {
+                data.forEach(row => {
+                    // Photo logic: Agar link hai toh dikhao, warna default icon
+                    let photoUrl = (row[6] && row[6].includes("http")) ? row[6] : "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+                    let statusCls = row[5] === 'IN' ? 'badge-in' : 'badge-out';
+                    
+                    html += `
+                        <tr>
+                            <td style="display:flex; align-items:center; gap:12px;">
+                                <img src="${photoUrl}" class="student-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
+                                <div><b>${row[0]}</b></div>
+                            </td>
+                            <td>
+                                <div style="font-size:11px; color:#666;">In: ${row[1]}</div>
+                                <div style="font-size:11px; color:#666;">Out: ${row[2]}</div>
+                            </td>
+                            <td><span class="badge ${statusCls}">${row[5]}</span></td>
+                        </tr>
+                    `;
+                });
+            }
+            document.getElementById('tBody').innerHTML = html;
+        } catch(e) { 
+            document.getElementById('tBody').innerHTML = "<tr><td colspan='3' style='text-align:center; color:red;'>Connection Error! Check Internet.</td></tr>";
         }
+    }
 
-        function doSearch() {
-            let v = document.getElementById("filter").value.toLowerCase();
-            let rows = document.getElementById("tBody").getElementsByTagName("tr");
-            for(let r of rows) r.style.display = r.innerText.toLowerCase().includes(v) ? "" : "none";
+    function filterTable() {
+        let val = document.getElementById("sInput").value.toLowerCase();
+        let rows = document.getElementById("tBody").getElementsByTagName("tr");
+        for (let r of rows) {
+            if(r.cells.length > 1) {
+                let n = r.cells[0].innerText.toLowerCase();
+                r.style.display = n.includes(val) ? "" : "none";
+            }
         }
-    </script>
+    }
+</script>
 </body>
 </html>
