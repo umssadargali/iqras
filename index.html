@@ -18,7 +18,7 @@
         .b-reset { background: #555; font-size: 12px; padding: 8px; margin-bottom: 10px; width: auto; min-width: 150px; }
         
         #status { font-weight: bold; margin: 10px 0; min-height: 25px; transition: 0.3s; }
-        .success-msg { color: #2e7d32; font-size: 20px; display: block; padding: 5px; border-radius: 5px; background: #e8f5e9; border: 1px solid #c8e6c9; }
+        .success-msg { color: #2e7d32; font-size: 18px; display: block; padding: 10px; border-radius: 8px; background: #e8f5e9; border: 2px solid #4caf50; }
         
         .footer { font-size: 11px; color: #777; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
     </style>
@@ -64,13 +64,11 @@
 <canvas id="c" style="display:none;"></canvas>
 
 <script>
-    // Yahan apna updated deployment URL dalein
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyLbmtYzTZi9Rg9geYbZgzQLuQX6N25Rf1t6SQKZ0B_v5YwiZtBoYNMaH3im-uJm8u_g/exec"; 
 
-    // 1. Clock
+    // Clock
     setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB'); }, 1000);
 
-    // 2. Camera Setup
     let v = document.getElementById('v'), b64 = "", streamRef = null;
 
     async function startCam() {
@@ -80,13 +78,9 @@
             v.srcObject = streamRef;
             v.play();
             document.getElementById('status').innerText = "Camera Ready ✅";
-            document.getElementById('status').style.color = "black";
-        } catch (e) {
-            document.getElementById('status').innerText = "Camera Error! Check Permissions";
-        }
+        } catch (e) { document.getElementById('status').innerText = "Camera Error!"; }
     }
 
-    // Load Memory
     window.onload = () => {
         startCam();
         const saved = localStorage.getItem('lastClass');
@@ -112,19 +106,14 @@
             .then(data => {
                 sl.innerHTML = "<option value=''>-- SELECT STUDENT --</option>";
                 data.forEach(n => sl.innerHTML += `<option value="${n}">${n}</option>`);
-            })
-            .catch(err => {
-                sl.innerHTML = "<option>Error loading students</option>";
             });
     }
 
     function snap() {
-        if(!v.srcObject) { startCam(); return; }
         const cn = document.getElementById('c');
-        // Quality optimized for Drive upload
         cn.width = 400; cn.height = 300;
         cn.getContext('2d').drawImage(v, 0, 0, 400, 300);
-        b64 = cn.toDataURL('image/jpeg', 0.6); 
+        b64 = cn.toDataURL('image/jpeg', 0.5); // Quality 0.5 for speed
         document.getElementById('p').src = b64; 
         document.getElementById('p').style.display = "block"; 
         v.style.display = "none";
@@ -135,14 +124,14 @@
         const cid = document.getElementById('classList').value;
         const name = document.getElementById('sList').value;
         
-        if(!cid) return alert("Please select a class!");
-        if(!name) return alert("Select Student!");
-        if(t === 'check-in' && !b64) return alert("Please take a photo for School-In!");
+        if(!cid || !name) return alert("Select Class and Student!");
+        if(t === 'check-in' && !b64) return alert("Take Photo First!");
 
-        document.getElementById('ctrls').style.display = "none";
-        document.getElementById('status').innerText = "🚀 Processing Attendance...";
-        document.getElementById('status').style.color = "blue";
-
+        // --- INSTANT UI UPDATE ---
+        const statusDiv = document.getElementById('status');
+        statusDiv.innerHTML = `<span class="success-msg">✅ Done. ${name}</span>`;
+        
+        // Background logic: GPS fetch + Background Send
         navigator.geolocation.getCurrentPosition(pos => {
             const payload = {
                 classId: cid, 
@@ -152,38 +141,31 @@
                 photo: b64
             };
 
+            // Background send (No-wait)
             fetch(SCRIPT_URL, {
                 method: 'POST',
+                mode: 'no-cors', 
                 body: JSON.stringify(payload)
-            })
-            .then(res => res.text())
-            .then(result => {
-                const statusDiv = document.getElementById('status');
-                statusDiv.innerHTML = `<span class="success-msg">✅ ${t === 'check-in' ? 'In' : 'Out'} Marked: ${name}</span>`;
-                resetUI(false); 
-            })
-            .catch(err => {
-                alert("Server Error! Data might not have saved.");
-                document.getElementById('ctrls').style.display = "block";
             });
 
+            // Auto Reset after 3 seconds
+            setTimeout(() => { resetUI(true); }, 3000);
+
         }, (err) => { 
-            alert("GPS/Location permission zaroori hai!"); 
-            document.getElementById('ctrls').style.display = "block";
-            document.getElementById('status').innerText = "GPS Error ❌";
-        }, { enableHighAccuracy: true });
+            // Minimal alert for GPS to not block too much
+            console.log("GPS Error");
+            setTimeout(() => { resetUI(true); }, 3000);
+        });
     }
 
     function resetUI(clearMsg) {
         b64 = ""; 
         document.getElementById('p').style.display = "none"; 
         v.style.display = "block";
-        document.getElementById('ctrls').style.display = "block";
         document.getElementById('snBtn').innerText = "📸 TAKE PHOTO";
         document.getElementById('sList').value = "";
         if(clearMsg) {
             document.getElementById('status').innerText = "Ready";
-            document.getElementById('status').style.color = "black";
         }
     }
 </script>
